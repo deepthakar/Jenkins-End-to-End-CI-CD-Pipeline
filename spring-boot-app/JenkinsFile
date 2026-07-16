@@ -20,12 +20,11 @@ pipeline {
       }
     }
 	stage('Static Code Analysis') {
+		tools {
+			jdk 'Java17' // Pulls the exact manual configuration you saved in the UI
+		}
 		environment {
 			SONAR_URL = "http://54.82.22.235:9000"
-			// Force Maven to use Java 17 for this stage execution
-			JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
-			// Prepend Java 17 binaries to the execution path
-			PATH      = "${JAVA_HOME}/bin:${env.PATH}"
 		}
 		steps {
 			withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
@@ -33,6 +32,7 @@ pipeline {
 			}
 		}
 	}
+
 
 
 
