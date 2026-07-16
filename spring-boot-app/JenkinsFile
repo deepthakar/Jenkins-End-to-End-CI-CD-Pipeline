@@ -23,16 +23,19 @@ pipeline {
 	stage('Static Code Analysis') {
 		environment {
 			SONAR_URL = "http://54.82.22.235:9000"
-			// Force the Jenkins pipeline runner to look at the Java 17 path explicitly
-			JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
-			PATH      = "${JAVA_HOME}/bin:${env.PATH}"
 		}
 		steps {
 			withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-				sh 'cd spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+				// Unsetting JAVA_HOME forces Maven to cleanly fall back onto the container's default global system java bin path
+				sh '''
+					unset JAVA_HOME
+					cd spring-boot-app
+					mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
+				'''
 			}
 		}
 	}
+
 
 
 
