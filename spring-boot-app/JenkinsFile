@@ -63,14 +63,16 @@ pipeline {
       }
       steps {
         script {
-            // Downgrade the client request wrapper protocol to match the daemon's legacy layer mapping
             sh '''
-                export DOCKER_API_VERSION=1.41
+                # Download a static binary layout matching API v1.44+
+                curl -sSL https://docker.com | tar -xz -C /tmp/
+                export PATH="/tmp/docker:$PATH"
+                
                 cd spring-boot-app && docker build -t ${DOCKER_IMAGE} .
             '''
             
-            // To ensure the native Jenkins library push step doesn't fail, wrap it with the environment setting too
-            withEnv(["DOCKER_API_VERSION=1.41"]) {
+            // Push using the same updated path binary variables
+            withEnv(["PATH=/tmp/docker:${env.PATH}"]) {
                 def dockerImage = docker.image("${DOCKER_IMAGE}")
                 docker.withRegistry('https://docker.io', "docker-cred") {
                     dockerImage.push()
@@ -79,6 +81,7 @@ pipeline {
         }
       }
     }
+
 
     stage('Update Deployment File') {
         environment {
