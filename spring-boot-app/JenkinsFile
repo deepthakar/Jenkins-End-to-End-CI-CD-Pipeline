@@ -19,12 +19,13 @@ pipeline {
         sh 'cd spring-boot-app && mvn clean package'
       }
     }
+
 	stage('Static Code Analysis') {
-		tools {
-			jdk 'Java17' // Pulls the exact manual configuration you saved in the UI
-		}
 		environment {
 			SONAR_URL = "http://54.82.22.235:9000"
+			// Replace this path with the exact string returned by your terminal tool
+			JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
+			PATH      = "${JAVA_HOME}/bin:${env.PATH}"
 		}
 		steps {
 			withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
