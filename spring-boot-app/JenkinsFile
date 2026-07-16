@@ -55,7 +55,6 @@ pipeline {
 
 
 
-
     stage('Build and Push Docker Image') {
       environment {
         DOCKER_IMAGE = "abhishekf5/ultimate-cicd:${BUILD_NUMBER}"
@@ -64,14 +63,17 @@ pipeline {
       steps {
         script {
             sh '''
-                # Download a static binary layout matching API v1.44+
+                # 1. Download the real static binary tarball for a modern Docker Client (v26+)
                 curl -sSL https://docker.com | tar -xz -C /tmp/
+                
+                # 2. Prepend the new modern docker client to the runtime PATH
                 export PATH="/tmp/docker:$PATH"
                 
+                # 3. Compile the application container image using the updated client
                 cd spring-boot-app && docker build -t ${DOCKER_IMAGE} .
             '''
             
-            // Push using the same updated path binary variables
+            // 4. Force Jenkins native docker libraries to inherit the modern binary path for pushing
             withEnv(["PATH=/tmp/docker:${env.PATH}"]) {
                 def dockerImage = docker.image("${DOCKER_IMAGE}")
                 docker.withRegistry('https://docker.io', "docker-cred") {
