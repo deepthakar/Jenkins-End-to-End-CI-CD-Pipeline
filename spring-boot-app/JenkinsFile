@@ -1,10 +1,13 @@
 pipeline {
   agent {
     docker {
-      image 'abhishekf5/maven-abhishek-docker-agent:v1'
-      args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+      // Upgrading to v2 provides the required Java runtime environment updates
+      image 'abhishekf5/maven-abhishek-docker-agent:v2' 
+      args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
+  // ... rest of your stages stay the same
+
   stages {
     stage('Checkout') {
       steps {
@@ -26,15 +29,25 @@ pipeline {
 		}
 		steps {
 			withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-				// Unsetting JAVA_HOME forces Maven to cleanly fall back onto the container's default global system java bin path
 				sh '''
-					unset JAVA_HOME
+					# 1. Update package lists inside the running container
+					apt-get update && apt-get install -y wget curl
+					
+					# 2. Download and install a portable Java 17 JDK binaries distribution
+					curl -sL https://github.com | tar -xz -C /tmp/
+					
+					# 3. Explicitly wire the runtime process to use the downloaded JDK binaries
+					export JAVA_HOME="/tmp/jdk-17.0.11+9"
+					export PATH="$JAVA_HOME/bin:$PATH"
+					
+					# 4. Trigger Maven scanner
 					cd spring-boot-app
 					mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
 				'''
 			}
 		}
 	}
+
 
 
 
