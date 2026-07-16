@@ -21,6 +21,9 @@ pipeline {
       }
     }
 
+
+
+
 	stage('Static Code Analysis') {
 		environment {
 			SONAR_URL = "http://54.82.22.235:9000"
@@ -28,25 +31,24 @@ pipeline {
 		steps {
 			withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
 				sh '''
-					# 1. Ensure tools are ready
-					apt-get update && apt-get install -y wget curl tar
+					# 1. Clear any custom variables so apt can run cleanly
+					unset JAVA_HOME
 					
-					# 2. Download stable, explicit OpenJDK 17 binaries using a direct clean URL
-					curl -fSsl --connect-timeout 15 --retry 3 \
-					  "https://github.com" \
-					  | tar -xz -C /tmp/
+					# 2. Update package lists and install openjdk-17 natively inside the container
+					apt-get update && apt-get install -y openjdk-17-jdk
 					
-					# 3. Explicitly wire the runtime process to use the downloaded JDK binaries
-					export JAVA_HOME="/tmp/jdk-17.0.11+9"
+					# 3. Force the process environment to point to the newly installed native JDK path
+					export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
 					export PATH="$JAVA_HOME/bin:$PATH"
 					
-					# 4. Trigger Maven scanner
+					# 4. Run the Maven SonarQube validation
 					cd spring-boot-app
 					mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
 				'''
 			}
 		}
 	}
+
 
 
 
