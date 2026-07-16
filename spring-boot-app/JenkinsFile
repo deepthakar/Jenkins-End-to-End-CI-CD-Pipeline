@@ -23,7 +23,7 @@ pipeline {
 	stage('Static Code Analysis') {
 		environment {
 			SONAR_URL = "http://54.82.22.235:9000"
-			// Injects the host machine's manual JDK path straight into the execution block
+			// Force the Jenkins pipeline runner to look at the Java 17 path explicitly
 			JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
 			PATH      = "${JAVA_HOME}/bin:${env.PATH}"
 		}
